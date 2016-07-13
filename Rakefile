@@ -3,5 +3,5 @@ require "rspec/core/rake_task"
 
 RSpec::Core::RakeTask.new(:spec) do |t|
   t.pattern = "spec/*/*_spec.rb"
-  t.pattern = "spec/unit/puppet/type/*.rb"
+  t.pattern = "spec/unit/puppet/*/*.rb"
 end

@@ -2,10 +2,12 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
 
   desc "Provider for newsyslog"
 
+  mk_resource_methods
+
   confine :osfamily => "FreeBSD",
           :operatingsystemmajrelease => /1[0-9]/
   defaultfor :osfamily => "FreeBSD"
-
+  hi = resource[:name]
   nsdir = "/usr/local/etc/newsyslog.conf.d"
 #  nsfile = "{nsdir}/#{resource[:name]}"
   header1 = "\#\#\# Managed by Puppet\n\#\#\#DO NOT EDIT\n"
@@ -45,8 +47,17 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
     end
   end
 
+  def self.prefetch(resources)
+    instances.each do |prov|
+      if resource == resources[prov.name]
+        resource.provider = prov
+      end
+    end
+  end
+
   def exists?
-    File.exist?(nsfile)
+    @property_hash[:ensure] == :present
+#    File.exist?(nsfile)
   end
 
   def create
@@ -71,41 +82,5 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
     self.debug("Deleted #{nsfile}")
 
     restart_newsyslog
-  end
-
-  def owner
-    owner = line.split("\t")[1]
-  end
-
-  def group
-    group = line.split("\t")[2]
-  end
-
-  def mode
-    mode = line.split("\t")[3]
-  end
-
-  def count
-    count = line.split("\t")[4]
-  end
-
-  def size
-    size = line.split("\t")[5]
-  end
-
-  def time
-    time = line.split("\t")[6]
-  end
-
-  def flags
-    flags = line.split("\t")[7]
-  end
-
-  def pidfile
-    pidfile = line.split("\t")[8]
-  end
-
-  def signal
-    signal = line.split("\t")[9]
   end
 end # Puppet::Type
