@@ -8,7 +8,7 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
           :operatingsystemmajrelease => =~ /1[0-9]/
   defaultfor :osfamily => "FreeBSD"
 
-  nsdir = "/etc/newsyslog.conf.d"
+  nsdir = "/usr/local/etc/newsyslog.conf.d"
   nsfile = "{nsdir}/#{resource[:name]}"
   header1 = "\#\#\# Managed by Puppet\n\#\#\#DO NOT EDIT\n"
   header2 = "\# logfilename          [owner:group]    mode count " + \
@@ -31,15 +31,9 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
       val = File.read(n)
       val.each_line do |l|
         next if l =~ /^#/
-        :owner = l[1]
-        :group = l[2]
-        :mode = l[3]
-        :count = l[4]
-        :size = l[5]
-        :when = l[6]
-        :flags = l[7]
-        :pidfile = l[8]
-        :signal - l[9]
+        l = l[1..-1]
+        :owner, :group, :mode, :count, :size, :when, :flags, :pidfile,
+        :signal = l
       end
     end
   end
