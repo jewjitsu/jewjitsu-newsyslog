@@ -8,16 +8,30 @@ Puppet::Type.newtype(:newsyslog) do
     desc "Name of the system log file to be archived."
   end
 
-  newproperty(:"owner:group") do
-    desc "This optional field specifies the owner and group for the archive
-          file .  The \":\" is essential regardless if the owner or group field
-          is left blank or contains a value.  The field may be numeric, or a
-          name which is present in /etc/passwd or /etc/group."
+  newproperty(:owner) do
+    desc "This optional field specifies the owner for the archive file.  The
+          \":\" is essential regardless if the owner or group field is left
+          blank or contains a value.  The field may be numeric, or a name
+          which is present in /etc/passwd or /etc/group."
 
     validate do |value|
-      value = value.downcase!
-      if ! value =~ /^[a-z]+:[0-9]+$/ or ! value =~ /^[0-9]+:[0-9]+$/
-        fail("invalid owner:group (#{value})"
+      val = value.downcase
+      unless val =~ /[a-z0-9_]+$/
+        fail("invalid owner (#{val})")
+      end
+    end
+  end
+
+  newproperty(:group) do
+    desc "This optional field specifies the owner for the archive file.  The
+          \":\" is essential regardless if the owner or group field is left
+          blank or contains a value.  The field may be numeric, or a name
+          which is present in /etc/passwd or /etc/group."
+
+    validate do |value|
+      val = value.downcase
+      unless val =~ /[a-z0-9_]+$/
+        fail("invalid group (#{val})")
       end
     end
   end
@@ -26,8 +40,9 @@ Puppet::Type.newtype(:newsyslog) do
     desc "The file mode of the log file and archives."
 
     validate do |value|
-    if ! value.is_a?(integer) and value.length != 3
-      fail("invalid file mode (#{value})")
+      unless value.is_a?(String) and value.length == 3
+        fail("invalid file mode (#{value})")
+      end
     end
   end
 
@@ -35,7 +50,9 @@ Puppet::Type.newtype(:newsyslog) do
     desc "The maximum number of archive files which may exist.  This does not
           consider the current log file."
 
-    fail("invalid count (#{value})") unless value.is_a?(Integer)
+    validate do |value|
+      fail("invalid count (#{value})") unless value.is_a?(Integer)
+    end
   end
 
   newproperty(:size) do
@@ -44,11 +61,13 @@ Puppet::Type.newtype(:newsyslog) do
           an asterisk (\"*\"), the log file will not be trimmed based on
           size."
 
-    fail("invalid size (#{value})") unless value.is_a?(Integer)
+    validate do |value|
+      fail("invalid size (#{value})") unless value.is_a?(Integer)
+    end
   end
 
-  newproperty(:when) do
-    desc "The when field may consist of an interval, a specific time, or
+  newproperty(:time) do
+    desc "The time field may consist of an interval, a specific time, or
           both.  If the when field contains an asterisk (\"*\"), logrotation
           will solely depend on the contents of the size field.  Otherwise,
           the when field consists of an optional interval in hours, usually
@@ -63,7 +82,13 @@ Puppet::Type.newtype(:newsyslog) do
           specify any special processing to be done for the log files
           matched by this line.  See man page for additional information."
 
-    fail("invalid flags (#{value})") unless value =~ /BCDGJNUXZ-/
+    validate do |value|
+      fail("invalid flags (#{value})") unless value =~ /[BCDGJNUXZ-]/
+      val = value.chars
+      if val.size != val.uniq.size
+        fail("duplicate flags are not allowed")
+      end
+    end
   end
 
   newproperty(:pidfile) do

@@ -2,21 +2,19 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
 
   desc "Provider for newsyslog"
 
-  commands
-
   confine :osfamily => "FreeBSD",
-          :operatingsystemmajrelease => =~ /1[0-9]/
+          :operatingsystemmajrelease => /1[0-9]/
   defaultfor :osfamily => "FreeBSD"
 
   nsdir = "/usr/local/etc/newsyslog.conf.d"
-  nsfile = "{nsdir}/#{resource[:name]}"
+#  nsfile = "{nsdir}/#{resource[:name]}"
   header1 = "\#\#\# Managed by Puppet\n\#\#\#DO NOT EDIT\n"
   header2 = "\# logfilename          [owner:group]    mode count " + \
-            "size when  flags [/pid_file] [sig_num]"
-  line = "#{resource[:name]}\t#{resource[:owner]}:#{resource[:group]}\t" + \
-         "#{resource[:mode]}\t#{resource[:count]}\t#{resource[:size]}\t" + \
-         "#{resource[:when]}\t#{resource[:flags]}\t#{resource[:pidfile]}\t" + \
-         "#{resource[:signal]}"
+            "size time  flags [/pid_file] [sig_num]"
+#  line = "#{resource[:name]}\t#{resource[:owner]}:#{resource[:group]}\t" + \
+#         "#{resource[:mode]}\t#{resource[:count]}\t#{resource[:size]}\t" + \
+#         "#{resource[:time]}\t#{resource[:flags]}\t#{resource[:pidfile]}\t" + \
+#         "#{resource[:signal]}"
 
   def restart_newsyslog
     execute("service newsyslog restart")
@@ -31,9 +29,18 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
       val = File.read(n)
       val.each_line do |l|
         next if l =~ /^#/
-        l = l[1..-1]
-        :owner, :group, :mode, :count, :size, :when, :flags, :pidfile,
-        :signal = l
+        name, owner, group, mode, count, size, time, flags, pidfile, signal = l
+        new(:name => name,
+            :owner => owner,
+            :group => group,
+            :mode => mode,
+            :count => count,
+            :size => size,
+            :time => time,
+            :flags => flags,
+            :pidfile => pidfile,
+            :signal => signal,
+        )
       end
     end
   end
@@ -72,6 +79,7 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
 
   def group
     group = line.split("\t")[2]
+  end
 
   def mode
     mode = line.split("\t")[3]
@@ -85,8 +93,8 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
     size = line.split("\t")[5]
   end
 
-  def when
-    when = line.split("\t")[6]
+  def time
+    time = line.split("\t")[6]
   end
 
   def flags
