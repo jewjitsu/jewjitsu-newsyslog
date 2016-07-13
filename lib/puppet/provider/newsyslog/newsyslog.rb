@@ -7,16 +7,10 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
   confine :osfamily => "FreeBSD",
           :operatingsystemmajrelease => /1[0-9]/
   defaultfor :osfamily => "FreeBSD"
-  hi = resource[:name]
   nsdir = "/usr/local/etc/newsyslog.conf.d"
-#  nsfile = "{nsdir}/#{resource[:name]}"
   header1 = "\#\#\# Managed by Puppet\n\#\#\#DO NOT EDIT\n"
   header2 = "\# logfilename          [owner:group]    mode count " + \
             "size time  flags [/pid_file] [sig_num]"
-#  line = "#{resource[:name]}\t#{resource[:owner]}:#{resource[:group]}\t" + \
-#         "#{resource[:mode]}\t#{resource[:count]}\t#{resource[:size]}\t" + \
-#         "#{resource[:time]}\t#{resource[:flags]}\t#{resource[:pidfile]}\t" + \
-#         "#{resource[:signal]}"
 
   def restart_newsyslog
     execute("service newsyslog restart")
@@ -57,10 +51,15 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
 
   def exists?
     @property_hash[:ensure] == :present
-#    File.exist?(nsfile)
   end
 
   def create
+    nsfile = "{nsdir}/#{@resource[:name]}"
+    line = "#{@resource[:name]}\t" + \
+           "#{@resource[:owner]}:#{@resource[:group]}\t" + \
+           "#{@resource[:mode]}\t#{@resource[:count]}\t" + \
+           "#{@resource[:size]}\t#{@resource[:time]}\t#" + \
+           "{@resource[:flags]}\t#{@resource[:pidfile]}\t#{@resource[:signal]}"
     # make sure /etc/newsyslog.conf.d exists before creating any files there
     if ! Dir.exist?(nsdir)
       Dir.mkdir(nsdir)
@@ -78,6 +77,7 @@ Puppet::Type.type(:newsyslog).provide(:newsyslog) do
   end
 
   def destroy
+    nsfile = "{nsdir}/#{@resource[:name]}"
     File.delete(nsfile)
     self.debug("Deleted #{nsfile}")
 
